@@ -20,7 +20,6 @@ const Home = () => {
       .then((devices) => {
         const audioDevices = devices.filter((device, index, self) => {
           return (
-            device.deviceId !== "default" &&
             device.kind !== "videoinput" &&
             index ===
               self.findIndex((data) => data.deviceId === device.deviceId)
@@ -55,7 +54,8 @@ const Home = () => {
         <ul className="flex flex-col gap-2">
           {audioOutputDevices.map((device, key) => (
             <li key={key}>
-              {key + 1} kind: {device.kind} <br /> label: {device.label}
+              {key + 1} kind: {device.kind} <br /> label: {device.label} <br />
+              id: {device.deviceId}
             </li>
           ))}
         </ul>
