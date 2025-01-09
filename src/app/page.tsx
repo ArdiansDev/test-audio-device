@@ -5,10 +5,18 @@ const Home = () => {
   const [audioOutputDevices, setAudioOutputDevices] = useState<
     MediaDeviceInfo[]
   >([]);
+  const [microphoneAccess, setMicrophoneAccess] = useState<boolean>(false);
 
   useEffect(() => {
+    let mediaStream: MediaStream;
+
     navigator.mediaDevices
-      .enumerateDevices()
+      .getUserMedia({ audio: true })
+      .then((stream) => {
+        mediaStream = stream;
+        setMicrophoneAccess(true);
+        return navigator.mediaDevices.enumerateDevices();
+      })
       .then((devices) => {
         const audioDevices = devices.filter((device, index, self) => {
           return (
@@ -20,21 +28,40 @@ const Home = () => {
         });
         // eslint-disable-next-line no-console
         console.log(audioDevices);
-        return audioDevices;
+        setAudioOutputDevices(audioDevices);
       })
-      .then(setAudioOutputDevices);
+      .catch((error) => {
+        console.error("Error accessing microphone:", error);
+      });
+
+    const stopMicrophone = () => {
+      if (mediaStream) {
+        mediaStream.getTracks().forEach((track) => track.stop());
+      }
+    };
+
+    const timer = setTimeout(stopMicrophone, 5000);
+
+    return () => {
+      clearTimeout(timer);
+      stopMicrophone();
+    };
   }, []);
 
   return (
     <div className="p-4">
       <h1>Available Media Devices</h1>
-      <ul className="flex flex-col gap-2">
-        {audioOutputDevices.map((device, key) => (
-          <li key={key}>
-            {key + 1} kind:{device.kind} <br /> label: {device.label}
-          </li>
-        ))}
-      </ul>
+      {microphoneAccess ? (
+        <ul className="flex flex-col gap-2">
+          {audioOutputDevices.map((device, key) => (
+            <li key={key}>
+              {key + 1} kind: {device.kind} <br /> label: {device.label}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>Microphone access is required to list audio devices.</p>
+      )}
     </div>
   );
 };
